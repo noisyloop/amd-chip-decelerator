@@ -18,3 +18,10 @@ def test_lower_cap_is_more_efficient_on_fake_gpu():
 def test_cli_fake(capsys):
     assert main(["sweep", "--fake"]) == 0
     assert "Most efficient" in capsys.readouterr().out
+
+
+def test_bigger_batch_uses_fewer_joules_per_token():
+    def jpt(batch):
+        t, w = FakeBackend(750, batch_size=batch).run_benchmark()
+        return w / t
+    assert jpt(64) < jpt(2)
