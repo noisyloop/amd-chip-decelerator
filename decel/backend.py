@@ -14,22 +14,33 @@ class Backend(Protocol):
 
 
 class FakeBackend:
-    """Simulated GPU so the tool runs without hardware.
+    """Simulated GPU serving an LLM, so the tool runs without hardware.
 
-    Throughput falls slowly as the cap drops (diminishing returns), which is
-    the shape real GPUs roughly follow. The numbers are made up.
+    Throughput is in tokens/sec. Bigger batches keep the GPU busier (more
+    tokens/sec, more watts). A lower power cap trims speed with diminishing
+    returns. All numbers are made up; calibrate against a real MI300X.
     """
 
-    def __init__(self, max_watts: int = 750, peak_throughput: float = 1000.0):
+    IDLE_FRACTION = 0.2  # idle draw as a share of max power
+    BATCH_KNEE = 16      # batch size where utilization reaches 50%
+
+    def __init__(self, max_watts: int = 750, peak_tokens_per_sec: float = 10000.0,
+                 batch_size: int = 32):
         self.max_watts = max_watts
-        self.peak = peak_throughput
+        self.peak = peak_tokens_per_sec
+        self.batch = batch_size
         self.cap = max_watts
 
     def set_power_cap(self, watts: int) -> None:
         self.cap = watts
 
     def run_benchmark(self) -> Tuple[float, float]:
-        return self.peak * (self.cap / self.max_watts) ** 0.35, float(self.cap)
+        util = self.batch / (self.batch + self.BATCH_KNEE)
+        idle = self.max_watts * self.IDLE_FRACTION
+        demand = idle + (self.max_watts - idle) * util
+        watts = min(self.cap, demand)
+        tokens_per_sec = self.peak * util * (watts / self.max_watts) ** 0.35
+        return tokens_per_sec, watts
 
 
 class AmdSmiBackend:

@@ -8,6 +8,7 @@ does the most work per watt. Power-limited data centers can then fit more GPUs.
 ```
 pip install -e .
 decel sweep --fake                                  # simulated GPU, no hardware
+decel sweep --fake --batch 8                        # smaller batch = fewer tokens/sec, more J/token
 decel sweep --gpu 0 --max-watts 750 --bench "./my_benchmark.sh"
 ```
 
@@ -17,7 +18,7 @@ throughput-per-watt at each step, and restores the max cap when done.
 
 ## Status
 
-Early. The `--fake` backend is simulated (made-up numbers). The `amd-smi`
+Early. The `--fake` backend simulates an LLM server (tokens/sec, batch size, J/token) with made-up numbers. The `amd-smi`
 backend has not been tested on real hardware; check its flags against your
 ROCm version. Power draw is currently approximated by the cap.
 
