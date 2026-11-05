@@ -1,0 +1,12 @@
+[project]
+name = "amd-chip-decelerator"
+version = "0.1.0"
+description = "Find the power cap where an AMD Instinct GPU does the most work per watt."
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+decel = "decel.cli:main"
+
+[tool.setuptools]
+packages = ["decel"]
